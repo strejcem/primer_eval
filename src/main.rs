@@ -21,6 +21,7 @@ struct Args {
     database: String,
 
     /// Path to save the detailed hit locations TSV file (Optional). 
+    /// Outputs every sequence. Unmatched sequences are padded with NA.
     /// 'Position' in the output is 1-based (the first base of the sequence is index 1).
     #[arg(short, long)]
     output: Option<String>,
@@ -200,7 +201,8 @@ fn main() {
         let out_file_clone = out_file.clone();
         let handle = thread::spawn(move || {
             let mut file = File::create(&out_file_clone).expect("Could not create output file");
-            writeln!(file, "Sequence_ID\tStrand\tPosition\tMM").unwrap();
+            // R-friendly and Python-friendly header
+            writeln!(file, "Sequence_ID\tStrand\tPosition\tMismatches").unwrap();
             for msg in rx {
                 file.write_all(msg.as_bytes()).unwrap();
             }
@@ -287,23 +289,36 @@ fn process_chunk(
     write_locations: bool
 ) -> (usize, Option<String>) {
     if write_locations {
-        let results: Vec<_> = chunk.par_iter().filter_map(|(id_bytes, seq)| {
+        // Detailed path: Extract hits or pad with NA
+        let results: Vec<(usize, String)> = chunk.par_iter().map(|(id_bytes, seq)| {
             let hits = matcher.find_hits(seq);
-            if hits.is_empty() { return None; }
-            
             let id_str = String::from_utf8_lossy(id_bytes);
+            
+            if hits.is_empty() { 
+                // Return 0 hits, and an NA padded row
+                return (0, format!("{}\tNA\tNA\tNA\n", id_str)); 
+            }
+            
             let mut lines = String::new();
             for (pos, strand, mm) in hits {
                 lines.push_str(&format!("{}\t{}\t{}\t{}\n", id_str, strand, pos, mm));
             }
-            Some(lines)
+            // If there's at least one hit, this sequence counts towards coverage
+            (1, lines)
         }).collect();
         
-        let hit_count = results.len(); 
+        // Sum the hit counts
+        let hit_count: usize = results.iter().map(|(count, _)| count).sum();
+        
+        // Combine the strings
         let mut combined_text = String::new();
-        for text in results { combined_text.push_str(&text); }
+        for (_, text) in results { 
+            combined_text.push_str(&text); 
+        }
+        
         (hit_count, Some(combined_text))
     } else {
+        // Fast path: Just short-circuit count hits
         let hit_count: usize = chunk.par_iter().map(|(_, seq)| {
             if matcher.is_hit(seq) { 1 } else { 0 }
         }).sum();
