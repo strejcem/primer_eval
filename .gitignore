@@ -10,3 +10,4 @@ Cargo.lock
 *.fq
 *.tsv
 *.txt
+*.gz
