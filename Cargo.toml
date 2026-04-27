@@ -1,0 +1,11 @@
+[package]
+name = "primer_eval"
+version = "0.1.0"
+edition = "2021"
+description = "A hyper-fast 16S primer coverage evaluator."
+repository = "https://github.com/YOUR_USERNAME/primer_eval"
+
+[dependencies]
+clap = { version = "4.4", features = ["derive"] }
+rayon = "1.8"
+needletail = "0.5"

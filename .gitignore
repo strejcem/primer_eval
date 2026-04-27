@@ -1,0 +1,12 @@
+# Ignore build artifacts and compiled binaries
+/target/
+**/*.rs.bk
+Cargo.lock
+
+# Ignore potential massive FASTA/TSV files you test locally
+*.fasta
+*.fa
+*.fastq
+*.fq
+*.tsv
+*.txt
