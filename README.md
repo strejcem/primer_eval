@@ -16,7 +16,7 @@ If you prefer to compile it yourself, you will need [Rust and Cargo](https://rus
 
 1. Clone the repository:
    ```bash
-   git clone [https://github.com/YOUR_USERNAME/primer_eval.git](https://github.com/YOUR_USERNAME/primer_eval.git)
+   git clone [https://github.com/strejcem/primer_eval.git](https://github.com/strejcem/primer_eval.git)
    cd primer_eval
    ```
 2. Build the optimized release binary:
